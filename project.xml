@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <pomVersion>3</pomVersion>
+  <currentVersion>1.0</currentVersion>
+  <id>java.net-role-process</id>
+  <name>Java.net rodeveloper role request handler</name>
+  <package>org.kohsuke.javanet.devrolehandler</package>
+  <description>Manages a conversation to discuss the developer role eligibility</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>dalma</groupId>
+      <artifactId>dalma</artifactId>
+      <version>0.5</version>
+    </dependency>
+    <dependency>
+      <id>dalma</id>
+      <artifactId>dalma-container</artifactId>
+      <version>0.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>dalma</groupId>
+      <artifactId>dalma-endpoint-email</artifactId>
+      <version>0.5</version>
+      <properties>
+        <dar.bundle>true</dar.bundle>
+      </properties>
+    </dependency>
+    <dependency>
+      <id>javamail</id>
+      <version>1.3.3</version>
+      <properties>
+        <jar.manifest.classpath>true</jar.manifest.classpath>
+        <dar.bundle>true</dar.bundle>
+      </properties>
+    </dependency>
+    <dependency>
+      <id>activation</id>
+      <version>1.0.3</version>
+      <properties>
+        <jar.manifest.classpath>true</jar.manifest.classpath>
+        <dar.bundle>true</dar.bundle>
+      </properties>
+    </dependency>
+    <dependency>
+      <id>javanettasks</id>
+      <version>1.0.8</version>
+    </dependency>
+    <dependency>
+      <id>dom4j</id>
+      <version>1.6</version>
+      <properties>
+        <jar.manifest.classpath>true</jar.manifest.classpath>
+        <dar.bundle>true</dar.bundle>
+      </properties>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>src/java</sourceDirectory>
+    <!--resources>
+      <resource>
+        <directory>src/conf</directory>
+      </resource>
+    </resources-->
+  </build>
+</project>
