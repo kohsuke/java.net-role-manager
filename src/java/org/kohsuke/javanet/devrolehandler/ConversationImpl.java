@@ -104,6 +104,7 @@ public class ConversationImpl extends Workflow {
 
             MimeMessageEx msg = new MimeMessageEx(endpoint.getSession(),
                 new ByteArrayInputStream(mailContent.getBytes("UTF-8")));
+            msg.setHeader("X-Role-Manager","http://role-manager.dev.java.net/");
 
             // expire in one week
             Calendar cal = new GregorianCalendar();
