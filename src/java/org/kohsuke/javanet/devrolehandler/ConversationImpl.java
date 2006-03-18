@@ -15,8 +15,6 @@ import javax.mail.MessagingException;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
@@ -46,29 +44,38 @@ public class ConversationImpl extends Workflow {
         this.endpoint = endpoint;
     }
 
-    @Override
-    public void run() {
-        try {
-            setTitle(role+" role request from "+userName+" to "+projectName);
+    /**
+     * Decides what to do with this role request.
+     *
+     * @return
+     *      The e-mail to be sent out, or null to exit immediately.
+     */
+    private String decideAction() throws Exception {
+        setTitle(role+" role request from "+userName+" to "+projectName);
 
-            // read the policy file
-            Document policyDoc = getPolicyDocument();
+        // read the policy file
+        Document policyDoc = getPolicyDocument();
 
-            String mailContent = null;
+        String mailContent = null;
 
-            // determine what to do with this role
-            getLogger().info("Determining the rule");
-            for( Element rule : (List<Element>)policyDoc.getRootElement().elements("rule") ) {
-                if(rule.attributeValue("role","").equals(role)) {
+        // determine what to do with this role
+        getLogger().info("Determining the rule");
+        for( Element rule : (List<Element>)policyDoc.getRootElement().elements("rule") ) {
+            String roleAtt = rule.attributeValue("role", "");
+            String[] roles = roleAtt.split(",");
+
+            for (String role : roles) {
+                role = role.trim();
+                if(role.equals(this.role)) {
                     // matching rule found
                     String action = rule.attributeValue("action","").toLowerCase();
                     if(action.equals("approve")) {
                         approve();
-                        return;
+                        return null;
                     }
                     if(action.equals("deny")) {
-                        deny(replace(new StringReader(rule.getText())));
-                        return;
+                        deny(replace(new StringReader(rule.getText())).trim());
+                        return null;
                     }
                     if(action.equals("talk")) {
                         mailContent = replace(new StringReader(rule.getText())).trim();
@@ -76,15 +83,24 @@ public class ConversationImpl extends Workflow {
                     }
                     // non recognizable action
                     getLogger().severe("Unknown action "+action);
-                    return;
+                    return null;
                 }
             }
-            if(mailContent==null) {
-                getLogger().severe("No matching rule found");
-                return;
-            }
+        }
+        if(mailContent==null) {
+            getLogger().severe("No matching rule found");
+            return null;
+        }
 
-            policyDoc = null; // reduce the continuation footprint
+        return mailContent;
+    }
+
+    @Override
+    public void run() {
+        try {
+            String mailContent = decideAction();
+            if(mailContent==null)
+                return;
 
             MimeMessageEx msg = new MimeMessageEx(endpoint.getSession(),
                 new ByteArrayInputStream(mailContent.getBytes("UTF-8")));
@@ -105,15 +121,19 @@ public class ConversationImpl extends Workflow {
                 MimeMessageEx reply = itr.next();
                 try {
                     String body = reply.getMainContent();
-                    if(body.startsWith("##APPROVE")) {
-                        recordAction(reply, "Approving a request based on e-mail from "+reply.getFrom());
-                        approve();
-                        return;
-                    }
-                    if(body.startsWith("##DENY")) {
-                        recordAction(reply, "Denying a request based on e-mail from "+reply.getFrom());
-                        deny(body);
-                        return;
+                    BufferedReader r = new BufferedReader(new StringReader(body));
+                    String line;
+                    while((line=r.readLine())!=null) {
+                        if(line.equals("##APPROVE")) {
+                            recordAction(reply, "Approving a request based on e-mail from "+reply.getFrom());
+                            approve();
+                            return;
+                        }
+                        if(line.equals("##DENY")) {
+                            recordAction(reply, "Denying a request based on e-mail from "+reply.getFrom());
+                            deny(body);
+                            return;
+                        }
                     }
                 } catch (MessagingException e) {
                     getLogger().log(Level.WARNING, "Failed to parse a reply",e);
