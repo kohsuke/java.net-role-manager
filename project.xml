@@ -48,6 +48,10 @@
       <version>1.0.8</version>
     </dependency>
     <dependency>
+      <id>httpunit</id>
+      <version>1.5.4</version>
+    </dependency>
+    <dependency>
       <id>dom4j</id>
       <version>1.6</version>
       <properties>

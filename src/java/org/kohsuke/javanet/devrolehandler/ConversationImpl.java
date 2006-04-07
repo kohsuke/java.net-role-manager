@@ -38,7 +38,10 @@ public class ConversationImpl extends Workflow {
 
     private final EmailEndPoint endpoint;
 
-    public ConversationImpl(EmailEndPoint endpoint, String projectName, String role, String userName) {
+    private final Main program;
+
+    public ConversationImpl(Main program, EmailEndPoint endpoint, String projectName, String role, String userName) {
+        this.program = program;
         this.projectName = projectName;
         this.role = role;
         this.userName = userName;
@@ -210,7 +213,7 @@ public class ConversationImpl extends Workflow {
      */
     private void deny(String msg) throws ProcessingException {
         getLogger().info("Denying request");
-        JavaNet jn = JavaNet.connect();
+        JavaNet jn = program.connectJavaNet();
 
         jn.getProject(projectName).getMembership().declineRole(
             jn.getUser(userName), role, msg );
@@ -221,7 +224,7 @@ public class ConversationImpl extends Workflow {
      */
     private void approve() throws ProcessingException {
         getLogger().info("Approving request");
-        JavaNet jn = JavaNet.connect();
+        JavaNet jn = program.connectJavaNet();
 
         jn.getProject(projectName).getMembership().grantRole(
             jn.getUser(userName), role
