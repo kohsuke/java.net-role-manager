@@ -12,6 +12,7 @@ import org.kohsuke.jnt.JavaNet;
 import org.kohsuke.jnt.ProcessingException;
 
 import javax.mail.MessagingException;
+import javax.mail.internet.InternetAddress;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -157,6 +158,21 @@ public class ConversationImpl extends Workflow {
 
         } catch (Exception e) {
             getLogger().log(Level.SEVERE,e.getMessage(),e);
+            notifyError(e);
+        }
+    }
+
+    private void notifyError(Exception e) {
+        try {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            MimeMessageEx msg = endpoint.createTextMessage(
+                new InternetAddress("owner@" + projectName + ".dev.java.net"),
+                sw.toString());
+            msg.setSubject("Role processing failed for "+userName);
+            endpoint.send(msg);
+        } catch (MessagingException x) {
+            getLogger().log(Level.SEVERE,x.getMessage(),x);
         }
     }
 
