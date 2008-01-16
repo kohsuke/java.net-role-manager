@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Calendar;
@@ -75,6 +76,10 @@ public class ConversationImpl extends Workflow {
                     String action = rule.attributeValue("action","").toLowerCase();
                     if(action.equals("approve")) {
                         approve();
+                        // allow people to send e-mail with "approve"
+                        mailContent = replace(new StringReader(rule.getText())).trim();
+                        if(mailContent.length()>0)
+                            endpoint.send(createMessage(mailContent));
                         return null;
                     }
                     if(action.equals("deny")) {
@@ -106,10 +111,6 @@ public class ConversationImpl extends Workflow {
             if(mailContent==null)
                 return;
 
-            MimeMessageEx msg = new MimeMessageEx(endpoint.getSession(),
-                new ByteArrayInputStream(mailContent.getBytes("UTF-8")));
-            msg.setHeader("X-Role-Manager","http://role-manager.dev.java.net/");
-
             // expire in one week
             Calendar cal = new GregorianCalendar();
             cal.add(Calendar.DATE,7);
@@ -120,7 +121,7 @@ public class ConversationImpl extends Workflow {
 
             boolean noreply = true;
 
-            ReplyIterator<MimeMessageEx> itr = endpoint.waitForMultipleReplies(msg, cal.getTime());
+            ReplyIterator<MimeMessageEx> itr = endpoint.waitForMultipleReplies(createMessage(mailContent), cal.getTime());
             while(itr.hasNext()) {
                 noreply = false;
                 MimeMessageEx reply = itr.next();
@@ -163,6 +164,16 @@ public class ConversationImpl extends Workflow {
             getLogger().log(Level.SEVERE,e.getMessage(),e);
             notifyError(e);
         }
+    }
+
+    /**
+     * Wraps the text content into an e-mail.
+     */
+    private MimeMessageEx createMessage(String mailContent) throws MessagingException, UnsupportedEncodingException {
+        MimeMessageEx msg = new MimeMessageEx(endpoint.getSession(),
+            new ByteArrayInputStream(mailContent.getBytes("UTF-8")));
+        msg.setHeader("X-Role-Manager","http://role-manager.dev.java.net/");
+        return msg;
     }
 
     private void notifyError(Exception e) {
