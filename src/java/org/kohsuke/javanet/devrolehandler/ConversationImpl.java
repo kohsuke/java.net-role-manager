@@ -75,6 +75,7 @@ public class ConversationImpl extends Workflow {
                     // matching rule found
                     String action = rule.attributeValue("action","").toLowerCase();
                     if(action.equals("approve")) {
+                        getLogger().info("Approving");
                         approve();
                         // allow people to send e-mail with "approve"
                         mailContent = replace(new StringReader(rule.getText())).trim();
@@ -83,10 +84,12 @@ public class ConversationImpl extends Workflow {
                         return null;
                     }
                     if(action.equals("deny")) {
+                        getLogger().info("Denying request");
                         deny(replace(new StringReader(rule.getText())).trim());
                         return null;
                     }
                     if(action.equals("talk")) {
+                        getLogger().info("Sending out the e-mail for a conversation");
                         mailContent = replace(new StringReader(rule.getText())).trim();
                         break;
                     }
